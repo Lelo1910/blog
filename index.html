@@ -327,7 +327,7 @@ nav {
 const CONFIG = {
   NOTION_TOKEN: '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',
   STREAM_DB_ID: '33ab64a908e7802fb60fdd81e256696c',
-  PROXY: 'https://api.allorigins.win/raw?url='
+  PROXY: 'https://corsproxy.io/?url='
 };
 
 function openModal() {
@@ -417,8 +417,8 @@ async function loadStream() {
     document.getElementById('notion-status-text').textContent = 'synced';
     document.querySelector('.notion-dot').style.background = '#5DCAA5';
   } catch (e) {
-    document.getElementById('notion-status-text').textContent = 'errore CORS — hosta il sito';
-    document.getElementById('feed').innerHTML = '<p class="loading-indicator">apri dal server, non da file locale</p>';
+    document.getElementById('notion-status-text').textContent = 'errore: ' + e.message;
+    document.getElementById('feed').innerHTML = '<p class="loading-indicator">errore connessione Notion — riprova tra poco</p>';
   }
 }
 
