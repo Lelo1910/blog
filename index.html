@@ -377,48 +377,22 @@ function renderFeed(msgs) {
 }
 
 
-async function fetchFromNotion(endpoint, body) {
-  const notionUrl = 'https://api.notion.com/v1/' + endpoint;
-  const proxyUrl = 'https://corsproxy.io/?url=' + encodeURIComponent(notionUrl);
-  const res = await fetch(proxyUrl, {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + CONFIG.NOTION_TOKEN,
-      'Notion-Version': '2022-06-28',
-      'Content-Type': 'application/json',
-      'x-requested-with': 'XMLHttpRequest'
-    },
-    body: JSON.stringify(body)
-  });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  return res.json();
-}
-
 async function loadStream() {
   try {
     document.getElementById('notion-status-text').textContent = 'loading...';
-    const data = await fetchFromNotion('databases/' + CONFIG.STREAM_DB_ID + '/query', {
-      sorts: [{ property: 'Date', direction: 'descending' }]
-    });
-    if (!data.results) {
-      document.getElementById('feed').innerHTML = '<p class="loading-indicator">errore: ' + (data.message || 'risposta vuota') + '</p>';
-      return;
-    }
-    const messages = data.results.map(page => ({
-      date: page.properties.Date?.date?.start || null,
-      text: page.properties.Titolo?.title?.[0]?.plain_text || ''
-    })).filter(m => m.text && m.date);
-
+    const res = await fetch(CONFIG.WORKER_URL + '/messages');
+    const data = await res.json();
+    const messages = (data.messages || []).filter(m => m.text && m.date);
     if (!messages.length) {
-      document.getElementById('feed').innerHTML = '<p class="loading-indicator">nessun messaggio ancora — aggiungili su Notion!</p>';
+      document.getElementById('feed').innerHTML = '<p class="loading-indicator">nessun messaggio ancora.</p>';
     } else {
       renderFeed(messages);
     }
     document.getElementById('notion-status-text').textContent = 'synced';
     document.querySelector('.notion-dot').style.background = '#5DCAA5';
-  } catch (e) {
-    document.getElementById('notion-status-text').textContent = 'errore: ' + e.message;
-    document.getElementById('feed').innerHTML = '<p class="loading-indicator">errore connessione Notion — riprova tra poco</p>';
+  } catch(e) {
+    document.getElementById('notion-status-text').textContent = 'errore connessione';
+    document.getElementById('feed').innerHTML = '<p class="loading-indicator">errore — riprova tra poco</p>';
   }
 }
 
@@ -436,7 +410,7 @@ function useDemoData() {
   document.getElementById('notion-status-text').textContent='demo — configura Notion';
 }
 
-loadStream();
+useDemoData();
 
 function alignNav() {
   const sidebar = document.querySelector('.sidebar');
